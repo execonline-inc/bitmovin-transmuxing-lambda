@@ -1,39 +1,22 @@
-class BitmovinTranscodeLambda {
+class BitmovinTransmuxingLambda {
 
-  getVideoLink = (message, context, callback) => {
-    console.log('message: ' + message);
-    message = JSON.parse(message);
-    const bucket = message.Records[0].s3.bucket.name;
-    const video = message.Records[0].s3.object.key;
-    const videoLink = `https://s3.amazonaws.com/${bucket}/${video}`;
-
-    if (video)  {
-      console.log(videoLink);
-      this.transcodeFromRaw(videoLink);
-    } else {
-      console.log('missing path to video file, unable to transcode');
-    }
-  }
-
-  transcodeFromRaw = (link) => {
+  createTransmuxes = () => {
+    const Q = require("Q");
     const bitcodin = require('bitcodin')(process.env.BITMOVIN_API_TOKEN);
-    const createInputPromise = bitcodin.input.create(link);
-    const jobConfiguration = {
-      "inputId": -1,
-      "encodingProfileId": parseInt(process.env.ENCODING_PROFILE_ID),
-      "manifestTypes": ["mpd", "m3u8"],
-      "outputId": parseInt(process.env.OUTPUT_ID)
-    };
-    this.triggerEncoding(createInputPromise, jobConfiguration, bitcodin);
+    bitcodin.job.list(0, 'finished').then(
+      (jobs) => {
+        console.log(jobs.jobs[0].outputPath.match(/[0-9]{2,}_[A-z 0-9]+$/)[0])
+        this.createLowTransmux(bitcodin, Q, jobs);
+        // this.createMediumTransmux(bitcodin, Q, jobPromise, newlyCreatedJob);
+        // this.createHighTransmux(bitcodin, Q, jobPromise, newlyCreatedJob);
+      },
+      (err) => {
+        console.error(err);
+      }
+    );
   }
 
-  createTransmuxes = (bitcodin, Q, newlyCreatedJob) => {
-    this.createLowTransmux(bitcodin, Q, newlyCreatedJob);
-    // this.createMediumTransmux(bitcodin, Q, jobPromise, newlyCreatedJob);
-    // this.createHighTransmux(bitcodin, Q, jobPromise, newlyCreatedJob);
-  }
-
-  createLowTransmux = (bitcodin, Q, newlyCreatedJob) => {
+  createLowTransmux = (bitcodin, Q, jobs) => {
     let transmuxings = [];
     let transmuxDetails;
     let lowOutputParams = {
@@ -43,7 +26,7 @@ class BitmovinTranscodeLambda {
       "accessKey": process.env.AWS_KEY,
       "secretKey": process.env.AWS_SECRET_KEY,
       "bucket": "execonline-staging-video",
-      "prefix": "bitmovin/" + newlyCreatedJob.outputPath.match(/[0-9]{2,}_[A-z 0-9]+$/),
+      "prefix": "bitmovin/" + jobs.jobs[0].outputPath.match(/[0-9]{2,}_[A-z 0-9]+$/)[0],
       "makePublic": true
     };
 
@@ -115,35 +98,6 @@ class BitmovinTranscodeLambda {
       }
     );
   }
-
-  triggerEncoding = (createInputPromise, jobConfiguration, bitcodin) => {
-    const Q = require("Q");
-    Q.all([createInputPromise]).then(
-      (result) => {
-        console.log('Successfully created input and encoding profile');
-        jobConfiguration.inputId = result[0].inputId;
-
-        bitcodin.job.create(jobConfiguration)
-          .then(
-          (newlyCreatedJob) => {
-            console.log('Successfully created a new transcoding job:', newlyCreatedJob);
-            console.log("OUTPUTPATH JOHNC: " + newlyCreatedJob.outputPath.match(/[0-9]{2,}_[A-z 0-9]+$/));
-            console.log('MPD-Url:', newlyCreatedJob.manifestUrls.mpdUrl);
-            console.log('M3U8-Url:', newlyCreatedJob.manifestUrls.m3u8Url);
-            setTimeout(function() {
-              createTransmuxes(bitcodin, Q, newlyCreatedJob);
-            }, 500000);
-          },
-          (error) => {
-            console.log('Error while creating a new transcoding job:', error);
-          }
-        );
-      },
-      (error) => {
-        console.log('Error while creating input and/or encoding profile:', error);
-      }
-    );
-  }
 }
 
-export default BitmovinTranscodeLambda;
+export default BitmovinTransmuxingLambda;
