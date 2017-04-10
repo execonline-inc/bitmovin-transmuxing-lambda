@@ -15,7 +15,6 @@ function test() {
   const bit = new BitmovinTransmuxingLambda();
   console.log('Starting new bitmovin transmuxing job');
   bit.createTransmuxes();
-  callback(null, 'Success!');
 }
 
 module.exports = {

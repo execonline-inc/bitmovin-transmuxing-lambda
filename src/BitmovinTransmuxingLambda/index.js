@@ -34,12 +34,12 @@ const createTransmux = quality => (bitcodin, jobs) => {
     (createOutputResponse) => {
       bitcodin.output.list(0, 'finished').then(
         (outputResponse) => {
-          outputDetails = outputResponse.outputs[0];
+          let outputDetails = outputResponse.outputs[0];
           transmuxConfiguration.outputId = outputDetails.outputId
 
           bitcodin.job.list(0, 'finished').then(
             (jobResponse) => {
-              jobDetails = jobResponse.jobs[0];
+              let jobDetails = jobResponse.jobs[0];
               let videoStreamConfigs = jobDetails.encodingProfiles[0].videoStreamConfigs;
               let audioStreamConfigs = jobDetails.encodingProfiles[0].audioStreamConfigs;
               transmuxConfiguration.jobId = jobDetails.jobId;
@@ -88,7 +88,7 @@ class BitmovinTransmuxingLambda {
     const bitcodin = require('bitcodin')(process.env.BITMOVIN_API_TOKEN);
     bitcodin.job.list(0, 'finished').then(
       (jobs) => {
-        createLowTransmux(bitcodin, jobs);
+        this.createLowTransmux(bitcodin, jobs);
         this.createMediumTransmux(bitcodin, jobs);
         this.createHighTransmux(bitcodin, jobs);
       },
