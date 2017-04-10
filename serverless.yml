@@ -11,11 +11,13 @@
 #
 # Happy Coding!
 
-service: aws-nodejs # NOTE: update this with your service name
+service: bitmovin-transmuxing-lambda
 
 provider:
   name: aws
   runtime: nodejs4.3
+  stage: dev
+  region: us-east-1
 
 # you can overwrite defaults here
 #  stage: dev
