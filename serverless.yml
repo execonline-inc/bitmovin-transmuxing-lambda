@@ -16,7 +16,7 @@ service: bitmovin-transmuxing-lambda
 provider:
   name: aws
   runtime: nodejs4.3
-  stage: dev
+  stage: staging
   region: us-east-1
 
 # you can overwrite defaults here

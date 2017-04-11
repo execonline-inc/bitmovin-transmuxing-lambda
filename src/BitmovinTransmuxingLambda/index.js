@@ -20,7 +20,7 @@ const createTransmux = quality => (bitcodin, jobs) => {
     "name": "staging/",
     "region": "us-east-1",
     "accessKey": process.env.AWS_KEY,
-    "secretKey": process.env.AWS_SECRET_KEY,
+    "secretKey": process.env.AWS_SECRECY_KEY,
     "bucket": "execonline-staging-video",
     "prefix": "bitmovin/" + jobs.jobs[0].outputPath.match(/[0-9]{2,}_[A-z 0-9]+$/)[0],
     "makePublic": true
