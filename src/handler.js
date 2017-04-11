@@ -1,12 +1,21 @@
+import BitmovinTransmuxingLambda from './BitmovinTransmuxingLambda';
+
+'use strict';
+require('dotenv').config();
+const jf = require('jsonfile');
+
 function entry(event, context, callback) {
-  //Method to run production code
+  const bit = new BitmovinTransmuxingLambda();
+  console.log('Starting new bitmovin transmuxing job');
+  bit.createTransmuxes();
+  callback(null, 'Success!');
 }
 
 function test() {
-  //Method to run test code
-  console.log("This is a test")
+  const bit = new BitmovinTransmuxingLambda();
+  console.log('Starting new bitmovin transmuxing job');
+  bit.createTransmuxes();
 }
-
 
 module.exports = {
   entry,
