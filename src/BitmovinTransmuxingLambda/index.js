@@ -10,68 +10,29 @@ const getRepresentationId = (quality, videoStreamConfigs) => {
   const idx = videoStreamIndex(quality);
   const config = videoStreamConfigs[idx];
   if (config) return config.representationId;
-} 
+}
 
-const createTransmux = quality => (bitcodin, jobs) => {
-  let transmuxings = [];
-  let transmuxDetails;
+const createOutput = (bitcodin, outputPath, jobId) => {
   let lowOutputParams = {
     "type": "s3",
-    "name": "staging/",
+    "name": process.env.ENVIRONMENT + "/" + outputPath,
     "region": "us-east-1",
     "accessKey": process.env.AWS_KEY,
     "secretKey": process.env.AWS_SECRECY_KEY,
-    "bucket": "execonline-staging-video",
-    "prefix": "bitmovin/" + jobs.jobs[0].outputPath.match(/[0-9]{2,}_[A-z 0-9]+$/)[0],
+    "bucket": process.env.AWS_S3_BUCKET,
+    "prefix": "bitmovin/" + outputPath,
     "makePublic": true
-  };
-
-  let transmuxConfiguration = {
-    "filename": quality + ".mp4"
   };
 
   bitcodin.output.s3.create(lowOutputParams).then(
     (createOutputResponse) => {
       bitcodin.output.list(0, 'finished').then(
         (outputResponse) => {
-          let outputDetails = outputResponse.outputs[0];
-          transmuxConfiguration.outputId = outputDetails.outputId
-
-          bitcodin.job.list(0, 'finished').then(
-            (jobResponse) => {
-              let jobDetails = jobResponse.jobs[0];
-              let videoStreamConfigs = jobDetails.encodingProfiles[0].videoStreamConfigs;
-              let audioStreamConfigs = jobDetails.encodingProfiles[0].audioStreamConfigs;
-              transmuxConfiguration.jobId = jobDetails.jobId;
-
-              let audioRepresentationIds = [];
-              if(audioStreamConfigs.length > 0) {
-                for (var i = 0, len = audioStreamConfigs.length; i < len; i++) {
-                  audioRepresentationIds.push(audioStreamConfigs[i].representationId);
-                }
-                transmuxConfiguration.audioRepresentationIds = audioRepresentationIds;
-              }
-
-              if(videoStreamConfigs.length > 0) {
-                transmuxConfiguration.videoRepresentationId = getRepresentationId(transmuxConfiguration.filename, videoStreamConfigs);
-              }
-
-              bitcodin.transmux.create(transmuxConfiguration).then(
-                (transmuxResponse) => {
-                  transmuxDetails = transmuxResponse;
-                  transmuxings.push(transmuxResponse);
-                  console.log('Successfully created a new transmuxing');
-                },
-                (transmuxDetails) => {
-                  console.log('Error while creating a new transmuxing', transmuxDetails);
-                }
-              );
-            },
-            (jobError) => {
-            console.log('Error while listing jobs', jobError);
-            }
-          );
-        },
+          let outputId = outputResponse.outputs[0].outputId;
+          createLowTransmux(bitcodin, outputPath, jobId, outputId);
+          createMediumTransmux(bitcodin, outputPath, jobId, outputId);
+          createHighTransmux(bitcodin, outputPath, jobId, outputId);
+          },
         (outputError) => {
           console.log('Error while listing outputs', outputError);
         }
@@ -83,26 +44,65 @@ const createTransmux = quality => (bitcodin, jobs) => {
   );
 }
 
-class BitmovinTransmuxingLambda {
-  createTransmuxes = () => {
-    const bitcodin = require('bitcodin')(process.env.BITMOVIN_API_TOKEN);
-    bitcodin.job.list(0, 'finished').then(
-      (jobs) => {
-        this.createLowTransmux(bitcodin, jobs);
-        this.createMediumTransmux(bitcodin, jobs);
-        this.createHighTransmux(bitcodin, jobs);
-      },
-      (err) => {
-        console.error(err);
+const createTransmux = quality => (bitcodin, outputPath, jobId, outputId) => {
+  let transmuxings = [];
+  let transmuxDetails;
+
+  let transmuxConfiguration = {
+      "outputId": outputId
+    };
+  transmuxConfiguration.filename = quality + ".mp4"
+
+  bitcodin.job.getDetails(jobId).then(
+    (jobResponse) => {
+      let videoStreamConfigs = jobResponse.encodingProfiles[0].videoStreamConfigs;
+      let audioStreamConfigs = jobResponse.encodingProfiles[0].audioStreamConfigs;
+      transmuxConfiguration.jobId = jobResponse.jobId;
+
+      let audioRepresentationIds = [];
+      if(audioStreamConfigs.length > 0) {
+        for (var i = 0, len = audioStreamConfigs.length; i < len; i++) {
+          audioRepresentationIds.push(audioStreamConfigs[i].representationId);
+        }
+        transmuxConfiguration.audioRepresentationIds = audioRepresentationIds;
       }
-    );
+
+      if(videoStreamConfigs.length > 0) {
+        transmuxConfiguration.videoRepresentationId = getRepresentationId(transmuxConfiguration.filename, videoStreamConfigs);
+      }
+
+      bitcodin.transmux.create(transmuxConfiguration).then(
+        (transmuxResponse) => {
+          transmuxDetails = transmuxResponse;
+          transmuxings.push(transmuxResponse);
+          console.log('Successfully created a new transmuxing');
+        },
+        (transmuxDetails) => {
+          console.log('Error while creating a new transmuxing', transmuxDetails);
+        }
+      );
+    },
+    (jobError) => {
+    console.log('Error while getting job details', jobError);
+    }
+  );    
+}
+
+const createLowTransmux = createTransmux("low");
+
+const createMediumTransmux = createTransmux("medium");
+
+const createHighTransmux = createTransmux("high");
+
+class BitmovinTransmuxingLambda {
+  createTransmuxes = (message) => {
+    message = JSON.parse(message)
+    const jobId = message.payload.jobId;
+    const outputPath = message.payload.outputUrl.match(/[0-9]{2,}_[A-z 0-9]+$/)[0];
+    const bitcodin = require('bitcodin')(process.env.BITMOVIN_API_TOKEN);
+
+    createOutput(bitcodin, outputPath, jobId);
   }
-
-  createLowTransmux = createTransmux("low");
-
-  createMediumTransmux = createTransmux("medium");
-
-  createHighTransmux = createTransmux("high");
 }
 
 export default BitmovinTransmuxingLambda;
