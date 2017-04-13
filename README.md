@@ -1,71 +1,26 @@
-# aws-lambda-boilerplate
-Use this boilerplate to get started creating your next Lambda function with Node.js
-
-## Installation
-
-Install Node
-
-```
-nvm install
-```
-
-```
-git clone git@github.com:execonline-inc/aws-lambda-boilerplate.git
-cp -r aws-lambda-boilerplate your-lambda-name
-cd your-lambda-name
-rm -rf .git
-```
-
-`yarn install`
-
-## Usage
-aws-lambda-boilerplate is ES6 ready.  Functions in handler.js will execute. `serverless deploy` deploys function to AWS.
-
-## Development
-1. Test your function locally in a node console before attempting to deploy
-1. `SLS_DEBUG='*' serverless webpack invoke --function test` to test with serverless locally.  You may need to set SLS_DEDUG: `export SLS_DEBUG='*'`
-
+# bitmovin-transmuxin-lambda
+ The bitmovin-transmuxing-lambda is a lambda function that allows for asynchronous transmuxing of completed bitmovin encoding jobs.  This function is triggered by a bitmovin notification when a bitmovin encoding job finishes transfering to our S3 bucket.  The lambda parses the jobId and outputUrl from the message, creates transmuxes of a few of the streams (.mp4 files), and outputs those transmuxes to the same S3 folder where the livestreams are for that job.
+ 
 # Setup
 
-* Add your AWS API key/secret to `vi ~/.aws/credentials`
-
-* Install `serverless`
-
-`npm install serverless -g`
-
 `npm install`
-
-In MySQL
-
-
-```
-CREATE USER 'ikatz'@'localhost' IDENTIFIED BY 'gimmeaccess';
-GRANT ALL PRIVILEGES ON exec_online_dev.* To 'ikatz'@'localhost';
-```
 
 # Deploy
 
 ## Development
 
- serverless webpack --out dist
- SLS_DEBUG=true serverless webpack invoke --function test
+`SLS_DEBUG='*' serverless webpack invoke --function test` to test with serverless locally. You may need to set SLS_DEBUG: `export SLS_DEBUG='*'`
 
 ## Staging
 
-1. Create `.env` with staging values
-1. `serverless deploy --stage staging --noDeploy --verbose`
-1. `open .serverless/`
-1. Configure lambda
-
-![](https://github-wiki-img.s3.amazonaws.com/VideoThumbnailRecorder-staging-config.png)
+1. `serverless deploy --stage staging --verbose`
+1. Configure lambda: add any environment variables and values, adjust the timeout if needed (up to 5 minutes), enable a trigger for your function, add a test event (json).
 
 ## Production
 
-1. Create `.env` with production values
-2. `serverless deploy --stage production --noDeploy --verbose`
+1. `serverless deploy --stage production --verbose`
+1. Configure lambda: add any environment variables and values, adjust the timeout if needed (up to 5 minutes), enable a trigger for your function, add a test event (json).
 
-Upload created zip file into [AWS Lambda](https://console.aws.amazon.com/lambda/home?region=us-east-1#/functions/transcodeFromRaw)
+## TODO
 
-# TODO
-
-* make serverless work fully
+1. Properly configure API Gateway to receive message.
