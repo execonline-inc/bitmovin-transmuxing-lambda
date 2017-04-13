@@ -20,7 +20,3 @@
 
 1. `serverless deploy --stage production --verbose`
 1. Configure lambda: add any environment variables and values, adjust the timeout if needed (up to 5 minutes), enable a trigger for your function, add a test event (json).
-
-## TODO
-
-1. Properly configure API Gateway to receive message.
