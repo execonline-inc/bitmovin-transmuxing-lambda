@@ -1,8 +1,8 @@
 const videoStreamIndex = (quality) => {
   switch (quality) {
-    case 'low.mp4': return 4;
-    case 'medium.mp4': return 2;
-    case 'high.mp4': return 0;
+    case 'mobile.mp4': return 5;
+    case 'medium.mp4': return 0;
+    case 'high.mp4': return 1;
   }
 } 
 
@@ -13,7 +13,7 @@ const getRepresentationId = (quality, videoStreamConfigs) => {
 }
 
 const createOutput = (bitcodin, outputPath, jobId) => {
-  let lowOutputParams = {
+  let outputParams = {
     "type": "s3",
     "name": process.env.ENVIRONMENT + "/" + outputPath,
     "region": "us-east-1",
@@ -24,7 +24,7 @@ const createOutput = (bitcodin, outputPath, jobId) => {
     "makePublic": true
   };
 
-  bitcodin.output.s3.create(lowOutputParams).then(
+  bitcodin.output.s3.create(outputParams).then(
     (createOutputResponse) => {
       bitcodin.output.list(0, 'finished').then(
         (outputResponse) => {
@@ -88,7 +88,7 @@ const createTransmux = quality => (bitcodin, outputPath, jobId, outputId) => {
   );    
 }
 
-const createLowTransmux = createTransmux("low");
+const createLowTransmux = createTransmux("mobile");
 
 const createMediumTransmux = createTransmux("medium");
 
