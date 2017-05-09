@@ -28,6 +28,7 @@
   "dependencies": {
     "babel-runtime": "latest",
     "bitcodin": "^0.7.0",
+    "dotenv": "^4.0.0",
     "json-loader": "latest"
   }
 }
