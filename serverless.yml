@@ -15,7 +15,7 @@ service: bitmovin-transmuxing-lambda
 
 provider:
   name: aws
-  runtime: nodejs4.3
+  runtime: nodejs8.10
   stage: staging
   region: us-east-1
 
