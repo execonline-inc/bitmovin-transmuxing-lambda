@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "babel-cli": "latest",
+    "babel-cli": "^6.26.0",
     "babel-core": "latest",
     "babel-eslint": "latest",
     "babel-loader": "latest",
@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "babel-runtime": "latest",
-    "bitcodin": "^0.7.0",
+    "bitcodin": "https://github.com/execonline-inc/bitcodin-node",
     "dotenv": "^4.0.0",
     "json-loader": "latest"
   }
