@@ -1,3 +1,4 @@
+***** This repository is deprecated *****
 # bitmovin-transmuxin-lambda
  The bitmovin-transmuxing-lambda is a lambda function that allows for asynchronous transmuxing of completed bitmovin encoding jobs.  This function is triggered by a bitmovin notification when a bitmovin encoding job finishes transfering to our S3 bucket.  The lambda parses the jobId and outputUrl from the message, creates transmuxes of a few of the streams (.mp4 files), and outputs those transmuxes to the same S3 folder where the livestreams are for that job.
  
